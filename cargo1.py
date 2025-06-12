@@ -5,6 +5,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
 
+# Page configuration
 st.set_page_config(page_title="KPA Cargo Volume Flow Dashboard", layout="wide")
 
 # --- Load Data ---
@@ -14,12 +15,15 @@ def load_data():
     return df
 
 df = load_data()
+
 st.title("📊 KPA Cargo Volume Flow Forecast Dashboard")
 
 # --- Preprocessing ---
+# Encode shift types
 shift_mapping = {'Day': 1, 'Night': 2, 'Rotational': 3}
 df['Shift_encoded'] = df['Shift'].map(shift_mapping)
 
+# Group data by work location
 location_grouped = df.groupby('Work Location').agg({
     'Years of Experience': 'mean',
     'Shift_encoded': 'mean',
@@ -30,7 +34,7 @@ location_grouped = df.groupby('Work Location').agg({
     'ID Number': 'Personnel_Count'
 })
 
-# Synthetic Cargo Volume Flow
+# Add synthetic cargo volume flow based on a formula
 np.random.seed(42)
 location_grouped['Cargo_Volume_Flow'] = (
     location_grouped['Avg_Experience'] * 2 +
@@ -39,15 +43,6 @@ location_grouped['Cargo_Volume_Flow'] = (
     np.random.normal(0, 5, size=location_grouped.shape[0])
 )
 
-# --- Model ---
+# --- Modeling ---
 X = location_grouped[['Avg_Experience', 'Avg_Shift', 'Personnel_Count']]
-y = location_grouped['Cargo_Volume_Flow']
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
-model = RandomForestRegressor(n_estimators=100, random_state=42)
-model.fit(X_train, y_train)
-y_pred = model.predict(X_test)
-rmse = np.sqrt(mean_squared_error(y_test, y_pred))
-r2 = r2_score(y_test, y_pred)
-
-# --- Dashboard Sections ---
-tab1, tab2, tab3 = st.tabs(["📈 Summary", "📊 Visua]()
+y = location_grouped['C]()_
