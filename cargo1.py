@@ -47,4 +47,7 @@ model = RandomForestRegressor(n_estimators=100, random_state=42)
 model.fit(X_train, y_train)
 y_pred = model.predict(X_test)
 rmse = np.sqrt(mean_squared_error(y_test, y_pred))
-r2 = r2_score(y_test, y
+r2 = r2_score(y_test, y_pred)
+
+# --- Dashboard Sections ---
+tab1, tab2, tab3 = st.tabs(["📈 Summary", "📊 Visua]()
