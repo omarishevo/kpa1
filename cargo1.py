@@ -45,4 +45,43 @@ location_grouped['Cargo_Volume_Flow'] = (
 
 # --- Modeling ---
 X = location_grouped[['Avg_Experience', 'Avg_Shift', 'Personnel_Count']]
-y = location_grouped['C]()_
+y = location_grouped['Cargo_Volume_Flow']
+
+# Split into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Fit Random Forest model
+model = RandomForestRegressor(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+
+# Make predictions
+y_pred = model.predict(X_test)
+
+# Evaluate model
+rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+r2 = r2_score(y_test, y_pred)
+
+# --- Streamlit Dashboard Layout ---
+tab1, tab2, tab3 = st.tabs(["📈 Summary", "📊 Visualizations", "🔍 Feature Insights"])
+
+# --- Tab 1: Summary ---
+with tab1:
+    st.subheader("🔢 Model Summary Metrics")
+    st.metric(label="Root Mean Squared Error (RMSE)", value=f"{rmse:.2f}")
+    st.metric(label="R² Score", value=f"{r2:.2f}")
+
+    st.subheader("🧾 Aggregated Data by Work Location")
+    st.dataframe(location_grouped.reset_index())
+
+# --- Tab 2: Visualizations ---
+with tab2:
+    st.subheader("📍 Cargo Volume Flow by Work Location")
+    st.bar_chart(location_grouped['Cargo_Volume_Flow'])
+
+    st.subheader("📌 Correlation Matrix")
+    corr_df = location_grouped.corr().round(2)
+    st.dataframe(corr_df)
+
+# --- Tab 3: Feature Insights ---
+with tab3:
+    st.subheader("🔧
