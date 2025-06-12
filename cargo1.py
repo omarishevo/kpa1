@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
@@ -58,39 +57,3 @@ with tab1:
     st.subheader("🔢 Model Summary Metrics")
     st.write(f"**Root Mean Squared Error (RMSE):** {rmse:.2f}")
     st.write(f"**R² Score:** {r2:.2f}")
-
-    st.subheader("🧾 Aggregated Data by Work Location")
-    st.dataframe(location_grouped.reset_index())
-
-with tab2:
-    st.subheader("📍 Cargo Volume Flow by Work Location")
-    fig1, ax1 = plt.subplots(figsize=(10, 5))
-    location_grouped.sort_values("Cargo_Volume_Flow", ascending=False)['Cargo_Volume_Flow'].plot(kind='bar', ax=ax1)
-    ax1.set_ylabel("Cargo Volume Flow")
-    ax1.set_title("Cargo Volume Flow per Work Location")
-    st.pyplot(fig1)
-
-    st.subheader("📌 Correlation Heatmap")
-    fig2, ax2 = plt.subplots()
-    sns.heatmap(location_grouped.corr(), annot=True, cmap="coolwarm", ax=ax2)
-    st.pyplot(fig2)
-
-with tab3:
-    st.subheader("🔧 Feature Importance")
-    importances = model.feature_importances_
-    features = X.columns
-    fig3, ax3 = plt.subplots()
-    sns.barplot(x=importances, y=features, palette="viridis", ax=ax3)
-    ax3.set_title("Feature Importance in Predicting Cargo Volume Flow")
-    st.pyplot(fig3)
-
-    st.subheader("🔁 Actual vs Predicted Cargo Flow")
-    fig4, ax4 = plt.subplots()
-    ax4.plot(y_test.values, label="Actual", marker='o')
-    ax4.plot(y_pred, label="Predicted", marker='x')
-    ax4.set_title("Actual vs Predicted Cargo Volume Flow")
-    ax4.set_ylabel("Cargo Volume")
-    ax4.legend()
-    st.pyplot(fig4)
-
-
