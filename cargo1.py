@@ -1,50 +1,52 @@
 import streamlit as st
 import pandas as pd
+from prophet import Prophet
+from prophet.plot import plot_plotly
+import plotly.express as px
+import plotly.graph_objs as go
 
-st.set_page_config(page_title="KPA Personnel Dashboard", layout="wide")
-st.title("Kenya Ports Authority (KPA) Personnel Dashboard")
+st.set_page_config(page_title="KPA Cargo Forecast", layout="wide")
+st.title("📦 Kenya Ports Authority - Cargo Volume Forecasting")
 
-uploaded_file = st.file_uploader("Upload the KPA personnel CSV file", type=["csv"])
+uploaded_file = st.file_uploader("Upload CSV with cargo data (Date & Volume columns)", type="csv")
 
-if uploaded_file is not None:
+if uploaded_file:
     df = pd.read_csv(uploaded_file)
-    st.subheader("📋 Data Preview")
+
+    st.subheader("📊 Raw Data Preview")
     st.dataframe(df.head())
 
-    st.sidebar.header("🔎 Filter Data (Only from Columns Present)")
-
-    filters = []
-
-    # Auto-select categorical columns for filtering
-    filterable_columns = [
-        col for col in df.columns
-        if df[col].dtype == 'object' or df[col].nunique() <= 30
-    ]
-
-    for col in filterable_columns:
-        options = df[col].dropna().unique().tolist()
-        selected = st.sidebar.multiselect(f"Filter by {col}", options, default=options)
-        filters.append(df[col].isin(selected))
-
-    # Apply filters
-    if filters:
-        combined_filter = filters[0]
-        for f in filters[1:]:
-            combined_filter &= f
-        filtered_df = df[combined_filter]
+    # Ensure required columns exist
+    if 'Date' not in df.columns or 'CargoVolume' not in df.columns:
+        st.error("Dataset must contain 'Date' and 'CargoVolume' columns.")
     else:
-        filtered_df = df.copy()
+        # Convert date
+        df['Date'] = pd.to_datetime(df['Date'])
 
-    st.subheader(f"🔍 Filtered Results ({len(filtered_df)} records)")
-    st.dataframe(filtered_df)
+        # Prepare data for Prophet
+        df_prophet = df.rename(columns={'Date': 'ds', 'CargoVolume': 'y'})
 
-    st.subheader("📊 Summary Charts")
+        st.subheader("📈 Historical Cargo Volume")
+        fig = px.line(df, x='Date', y='CargoVolume', title="Cargo Volume Over Time")
+        st.plotly_chart(fig)
 
-    # Chart only if column exists in filtered_df
-    for col in filterable_columns:
-        if col in filtered_df.columns and not filtered_df[col].empty:
-            st.markdown(f"**Count by {col}**")
-            st.bar_chart(filtered_df[col].value_counts())
+        # Forecasting
+        st.subheader("🔮 Forecast Settings")
+        periods = st.slider("Months to Forecast", min_value=1, max_value=24, value=6)
+
+        model = Prophet()
+        model.fit(df_prophet)
+
+        future = model.make_future_dataframe(periods=periods * 30)  # days
+        forecast = model.predict(future)
+
+        st.subheader("📈 Forecast Plot")
+        forecast_fig = plot_plotly(model, forecast)
+        st.plotly_chart(forecast_fig)
+
+        st.subheader("📉 Forecast Table")
+        st.dataframe(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail())
 
 else:
-    st.warning("📂 Please upload the `kpa_personnel_dataset_final.csv` file to begin.")
+    st.info("Please upload a CSV file with at least two columns: `Date` and `CargoVolume`.")
+
