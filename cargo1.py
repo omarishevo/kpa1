@@ -1,51 +1,59 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
+import plotly.express as px
 
-# Load dataset
-df = pd.read_csv("C:\Users\Administrator\Desktop\class work\kpa_personnel_dataset_final.csv")
+st.set_page_config(page_title="KPA Personnel Dashboard", layout="wide")
 
-# Encode experience level bins
-df['Experience Level'] = pd.cut(
-    df['Years of Experience'],
-    bins=[0, 5, 10, 20, 50],
-    labels=['Novice (0–5)', 'Junior (5–10)', 'Mid (10–20)', 'Senior (20+)']
-)
+st.title("Kenya Ports Authority (KPA) Personnel Dashboard")
 
-# Sidebar filters
-st.sidebar.header("🔍 Filter Options")
+# Upload CSV
+uploaded_file = st.file_uploader("Upload the KPA personnel CSV file", type=["csv"])
 
-# Shift filter
-shift_options = ['All'] + sorted(df['Shift'].dropna().unique().tolist())
-selected_shift = st.sidebar.selectbox("Shift", shift_options)
+if uploaded_file is not None:
+    df = pd.read_csv(uploaded_file)
 
-# Work location filter
-location_options = ['All'] + sorted(df['Work Location'].dropna().unique().tolist())
-selected_location = st.sidebar.selectbox("Work Location", location_options)
+    # Show preview
+    st.subheader("📋 Data Preview")
+    st.dataframe(df.head())
 
-# Experience level filter
-experience_options = ['All'] + df['Experience Level'].dropna().unique().astype(str).tolist()
-selected_experience = st.sidebar.selectbox("Experience Level", experience_options)
+    # Sidebar filters
+    st.sidebar.header("🔎 Filter Personnel Data")
+    
+    # Dynamic filters based on existing columns
+    position_options = df['Position'].dropna().unique().tolist()
+    selected_position = st.sidebar.multiselect("Filter by Position", position_options, default=position_options)
 
-# Apply filters
-filtered_df = df.copy()
+    department_options = df['Department'].dropna().unique().tolist() if 'Department' in df.columns else []
+    selected_department = st.sidebar.multiselect("Filter by Department", department_options, default=department_options)
 
-if selected_shift != 'All':
-    filtered_df = filtered_df[filtered_df['Shift'] == selected_shift]
+    gender_options = df['Gender'].dropna().unique().tolist() if 'Gender' in df.columns else []
+    selected_gender = st.sidebar.multiselect("Filter by Gender", gender_options, default=gender_options)
 
-if selected_location != 'All':
-    filtered_df = filtered_df[filtered_df['Work Location'] == selected_location]
+    # Apply filters
+    filtered_df = df[
+        (df['Position'].isin(selected_position)) &
+        (df['Department'].isin(selected_department) if 'Department' in df.columns else True) &
+        (df['Gender'].isin(selected_gender) if 'Gender' in df.columns else True)
+    ]
 
-if selected_experience != 'All':
-    filtered_df = filtered_df[filtered_df['Experience Level'].astype(str) == selected_experience]
+    # Show filtered data
+    st.subheader(f"🔍 Filtered Results ({len(filtered_df)} records)")
+    st.dataframe(filtered_df)
 
-# Main UI
-st.title("📦 KPA Personnel Explorer")
-st.markdown("Interactively filter the Kenya Ports Authority personnel dataset.")
+    # Visualizations
+    st.subheader("📊 Visualization")
 
-st.success(f"Displaying {len(filtered_df)} records after filtering.")
+    col1, col2 = st.columns(2)
 
-st.dataframe(
-    filtered_df[['ID Number', 'Name', 'Shift', 'Work Location', 'Years of Experience', 'Experience Level']],
-    use_container_width=True
-)
+    with col1:
+        if 'Position' in df.columns:
+            fig1 = px.histogram(filtered_df, x='Position', title='Personnel Count by Position')
+            st.plotly_chart(fig1, use_container_width=True)
+
+    with col2:
+        if 'Department' in df.columns:
+            fig2 = px.histogram(filtered_df, x='Department', title='Personnel Count by Department')
+            st.plotly_chart(fig2, use_container_width=True)
+
+else:
+    st.warning("Please upload the `kpa_personnel_dataset_final.csv` file to proceed.")
