@@ -1,5 +1,59 @@
 import streamlit as st
+import pandas as pdimport streamlit as st
 import pandas as pd
+import plotly.express as px
+
+# Load data
+@st.cache_data
+def load_data():
+    return pd.read_csv("kpa_personnel_dataset_final.csv")
+
+df = load_data()
+
+# Page setup
+st.set_page_config(page_title="KPA Personnel Dashboard", layout="wide")
+st.title("👷 Kenya Ports Authority - Personnel Analysis")
+
+# Sidebar filters
+st.sidebar.header("🔍 Filter Data")
+roles = st.sidebar.multiselect("Select Role", options=df["Role"].unique(), default=df["Role"].unique())
+locations = st.sidebar.multiselect("Select Work Location", options=df["Work Location"].unique(), default=df["Work Location"].unique())
+companies = st.sidebar.multiselect("Select Company", options=df["Company"].unique(), default=df["Company"].unique())
+
+filtered_df = df[
+    (df["Role"].isin(roles)) &
+    (df["Work Location"].isin(locations)) &
+    (df["Company"].isin(companies))
+]
+
+# Show filtered data
+st.subheader("📋 Filtered Personnel Data")
+st.dataframe(filtered_df)
+
+# Years of experience distribution
+st.subheader("📊 Years of Experience Distribution")
+fig_exp = px.histogram(filtered_df, x="Years of Experience", nbins=15, color="Shift", title="Experience by Shift")
+st.plotly_chart(fig_exp)
+
+# Staff per Work Location
+st.subheader("🏢 Staff Count per Work Location")
+fig_loc = px.bar(filtered_df['Work Location'].value_counts().reset_index(),
+                 x='index', y='Work Location', labels={'index': 'Location', 'Work Location': 'Number of Staff'},
+                 color='index')
+st.plotly_chart(fig_loc)
+
+# Shift distribution
+st.subheader("🕒 Shift Distribution")
+fig_shift = px.pie(filtered_df, names='Shift', title="Distribution by Shift")
+st.plotly_chart(fig_shift)
+
+# Gate usage
+st.subheader("🚪 Most Used Gates")
+fig_gate = px.bar(filtered_df['Mostly Used Gate'].value_counts().reset_index(),
+                  x='index', y='Mostly Used Gate',
+                  labels={'index': 'Gate', 'Mostly Used Gate': 'Number of Users'})
+st.plotly_chart(fig_gate)
+
 import plotly.express as px
 
 # Page configuration
